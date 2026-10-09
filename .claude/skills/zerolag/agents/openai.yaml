@@ -1,3 +1,0 @@
-interface:
-  display_name: "ZeroLag"
-  short_description: "Measure and eliminate webapp latency"
