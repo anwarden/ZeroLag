@@ -1,31 +1,49 @@
-**DEMO ONLY — synthetic findings and timings.**
+# Performance · Demo Operations Portal
 
-# Performance — Demo Operations Portal
+> **Demo only.** Synthetic findings and timings; no application was audited.
 
-**2 high-impact open · 7 found · 2 verified** · Optimizing
+**Optimize phase** · 09 Oct 2026 · 09:30 UTC · Mobile dashboard navigation and form submission
 
-**Next:** Remove repeated Prisma lookups from the list API
+Measured on: Synthetic example · production build on localhost · Chrome mobile profile (390×844, 4× CPU)
 
-## Response time
+**2 high-impact open · 2/7 findings verified · 1/2 retested journeys faster**
 
-| Interaction | Before | After | Change |
+**Working on:** Remove repeated Prisma lookups from the details panel. Then retest Open employee details.
+
+## Top bottlenecks
+
+1. **Remove repeated Prisma lookups from the details panel** · Measured · High impact · In progress · `PERF-02` · slows Open employee details · `lib/data/people.ts`
+2. **Check Vercel function region against the Neon region** · Hypothesis · High impact · Open · `PERF-03` · needs approval · slows Open employee details +1 · `Vercel project settings · Neon project settings`
+3. **Virtualize the long client-side employee table** · Measured · Medium impact · Open · `PERF-04` · `components/data-grid.tsx`
+
+## Journeys
+
+| Journey | Before | After | Result |
 |---|---:|---:|---|
-| Switch between dashboard tabs | 1.82 s | 960 ms | 47% faster |
-| Open employee details | 2.40 s | — | Awaiting comparable retest |
-| Submit administrative form | 1.34 s | 1.33 s | ≈ unchanged (0.4%) |
+| Switch between dashboard tabs | 1.82 s | 960 ms | 47% faster (−860 ms) |
+| Open employee details | 2.40 s | — | Awaiting retest |
+| Submit administrative form | 1.34 s | 1.30 s | Within noise |
 
-## Opportunities · highest impact first
+Statistic: Median click → confirmed save; Median click → usable.
 
-| Impact | Status | Finding |
-|---|---|---|
-| High | Verified | Eliminate sequential data fetching in tab navigation |
-| High | In progress | Remove repeated Prisma lookups from the list API |
-| High | Open | Check Vercel-to-Neon region alignment |
-| Medium | Open | Virtualize a long client-side table |
-| Medium | Open | Reduce nonessential JavaScript loaded with the admin shell |
-| Low | Verified | Remove an obsolete duplicate status request |
-| Low | Deferred | Avoid redundant style recalculation on hover |
+<details><summary>Other findings (4)</summary>
 
-**Caveats:** 3 (see source JSON).
+| Rank | Id | Impact | Evidence | Status | Finding |
+|---:|---|---|---|---|---|
+| 4 | `PERF-05` | Medium | Seen in code | Open | Move the chart library out of the shared admin layout |
+|  | `PERF-01` | High | Measured | Verified | Eliminate sequential data fetching in tab navigation |
+|  | `PERF-07` | Low | Measured | Verified | Remove a duplicate status request on back navigation |
+|  | `PERF-06` | Low | Hypothesis | Deferred | Avoid style recalculation on navigation hover |
 
-Full evidence: `PERFORMANCE_FINDINGS.json` · Visual: `PERFORMANCE_REPORT.html`.
+</details>
+
+<details><summary>Blind spots and limitations (4)</summary>
+
+- PostgreSQL / Neon: not observable. No read access to the shared database statistics.
+- Synthetic example: no repository, credentials, telemetry or customer data was used.
+- Findings can overlap; their gains must never be added together.
+- Region and bundle findings stay unverified until measured.
+
+</details>
+
+Gains are never added across findings. Full evidence: the source JSON and the HTML report.
