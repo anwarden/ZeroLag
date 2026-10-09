@@ -14,7 +14,7 @@ import path from "node:path";
 import process from "node:process";
 import { pathToFileURL } from "node:url";
 
-export const VERSION = "2.0.0";
+export const VERSION = "2.1.0";
 const LOCAL_HOSTS = new Set(["localhost", "127.0.0.1", "::1", "[::1]", "0.0.0.0"]);
 // Lighthouse "mobile slow 4G" values for DevTools-style throttling (RTT x 3.75, throughput x 0.9).
 const NETWORK = {

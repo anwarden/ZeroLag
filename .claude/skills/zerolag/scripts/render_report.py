@@ -21,7 +21,7 @@ from pathlib import Path
 import statistics
 import sys
 
-RENDERER_VERSION = "2.0.0"
+RENDERER_VERSION = "2.1.0"
 SCHEMA_VERSION = 2
 DEFAULT_INPUT = Path(".zerolag/findings.json")
 

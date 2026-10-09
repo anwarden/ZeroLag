@@ -1,6 +1,6 @@
 {
   "name": "zerolag",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Evidence-led latency audit and optimization for React, Next.js, Vercel, Prisma and Neon/PostgreSQL apps, with a one-screen report.",
   "author": { "name": "anwarden" },
   "homepage": "https://github.com/anwarden/ZeroLag",

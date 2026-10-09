@@ -3,7 +3,7 @@ name: zerolag
 description: Evidence-led latency audit and optimization for web apps built with React, Next.js (App Router, Server Actions), Vercel, Prisma and Neon/PostgreSQL, including monorepos and multi-app workspaces. Use when clicks, tab switches, navigation, search, forms, tables, mobile views, API routes, queries or cold starts feel slow, when INP, LCP or TTFB is poor, or when asked to audit, diagnose or optimize performance. Starts with a read-only audit and a one-screen report, then applies targeted fixes one at a time with before/after measurements.
 compatibility: Python 3.9+ standard library for the scripts. Optional - Node.js 20+ with the project's own Playwright, Chrome DevTools MCP, Vercel and Neon read access. No network access or package installs required.
 metadata:
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # ZeroLag

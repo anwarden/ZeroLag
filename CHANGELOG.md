@@ -2,7 +2,7 @@
 
 All notable changes to ZeroLag. Versions follow semantic versioning; the version lives in `SKILL.md` (`metadata.version`), `.claude-plugin/plugin.json`, both scripts and this file, and a test keeps them equal.
 
-## Unreleased
+## 2.1.0 — 2026-10-09
 
 - README reduced to install and use; everything else moved to `docs/guide.md`.
 - CI: the SQL job preloads `pg_stat_statements` and runs every documented query; the extension check compares the value exactly.
