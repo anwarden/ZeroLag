@@ -1,7 +1,8 @@
 """Runs the read-only SQL documented in references/data.md against a disposable database.
 
 Set ZEROLAG_TEST_DATABASE_URL to a throwaway PostgreSQL 16+ database (never a shared or production one) and
-install psql. Queries that need pg_stat_statements are skipped when the extension is absent.
+install psql. Queries that need pg_stat_statements are skipped when the extension is absent, unless
+ZEROLAG_REQUIRE_PG_STAT_STATEMENTS=1 (CI), which turns its absence into a failure.
 """
 
 from __future__ import annotations
@@ -42,10 +43,16 @@ class Documentation(unittest.TestCase):
 @unittest.skipUnless(URL and shutil.which("psql"), "set ZEROLAG_TEST_DATABASE_URL (disposable database) and install psql")
 class AgainstDatabase(unittest.TestCase):
     def psql(self, sql: str) -> subprocess.CompletedProcess:
-        return subprocess.run(["psql", URL, "-X", "-q", "-v", "ON_ERROR_STOP=1", "-c", sql], capture_output=True, text=True, timeout=60)
+        # -tA prints bare values, so the boolean can be compared exactly.
+        return subprocess.run(["psql", URL, "-X", "-q", "-tA", "-v", "ON_ERROR_STOP=1", "-c", sql],
+                              capture_output=True, text=True, timeout=60)
 
     def test_every_documented_query_runs_inside_the_read_only_wrapper(self):
-        has_statements = "t" in self.psql("SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_stat_statements')").stdout
+        check = self.psql("SELECT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'pg_stat_statements')")
+        self.assertEqual(check.returncode, 0, check.stderr)
+        has_statements = check.stdout.strip() == "t"
+        if os.environ.get("ZEROLAG_REQUIRE_PG_STAT_STATEMENTS") == "1":
+            self.assertTrue(has_statements, "pg_stat_statements is required but not installed in the test database")
         for query in statements(sql_blocks()[1]):
             if "pg_stat_statements" in query and not has_statements:
                 continue
