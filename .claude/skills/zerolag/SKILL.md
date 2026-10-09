@@ -74,6 +74,7 @@ Follow the critical path: input → main thread/React → Next.js routing/RSC/Se
 
 For every finding:
 - Record the root cause, not the symptom. A faster spinner is not a fix.
+- Attribute the time before blaming a cause: ablate it, check whether the main thread is busy or waiting, and compare data arrival with content display ([measurement](references/measurement.md) §2).
 - Set the evidence kind: `measured` (recorded timing, trace or count), `inspected` (confirmed in code, config or plan; cost unknown) or `hypothesis`.
 - Set coverage per layer: `checked`, `not_applicable`, `not_observable` or `skipped`.
 

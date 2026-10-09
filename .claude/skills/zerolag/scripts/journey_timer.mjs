@@ -183,6 +183,27 @@ function probe(key) {
     return !ready.text || (scope?.textContent || "").includes(ready.text);
   };
   local.met = (ready) => { try { return met(ready); } catch { return false; } };
+  // One clause per condition, so a failed or premature ready condition names the selector at fault.
+  local.explain = (ready) => {
+    const parts = [];
+    try {
+      if (ready.url) parts.push(location.href.includes(ready.url) ? "url ok" : `url "${ready.url}" not in ${location.pathname}`);
+      if (ready.gone) {
+        const left = [...document.querySelectorAll(ready.gone)].filter(visible).length;
+        parts.push(left ? `gone "${ready.gone}": ${left} still visible` : "gone ok");
+      }
+      let scope = document.body;
+      if (ready.selector) {
+        const all = [...document.querySelectorAll(ready.selector)];
+        const shown = all.filter(visible);
+        parts.push(`selector "${ready.selector}": ${all.length} match(es), ${shown.length} visible`
+          + (all.length && !shown.length ? " (present but hidden; check this profile's viewport)" : ""));
+        scope = shown[0];
+      }
+      if (ready.text) parts.push(scope && (scope.textContent || "").includes(ready.text) ? "text ok" : `text "${ready.text}" not found`);
+    } catch (error) { parts.push(`invalid selector: ${error.message}`); }
+    return parts.join("; ");
+  };
   const tick = () => {
     if (!state || !state.armed || state.t1 !== null) return;
     if (state.t0 !== null && local.met(state.ready)) {
@@ -247,7 +268,15 @@ async function act(page, action, base, hasTouch, timeout) {
 
 async function measureRun(page, journey, base, profile, timeout, traffic) {
   await page.goto(new URL(journey.start, base).href, { waitUntil: "load", timeout });
-  if (journey.start_ready) await page.locator(journey.start_ready).first().waitFor({ state: "visible", timeout });
+  const explain = (ready) => page.evaluate((r) => window.__zerolagProbe?.explain(r) ?? "probe not installed", ready)
+    .catch(() => "page unavailable");
+  if (journey.start_ready) {
+    try {
+      await page.locator(journey.start_ready).first().waitFor({ state: "visible", timeout });
+    } catch {
+      throw new Error(`start_ready not visible within ${timeout} ms: ${await explain({ selector: journey.start_ready })}`);
+    }
+  }
   await settle(page, traffic.inflight, timeout);
   const mode = "goto" in journey.action ? "navigation" : "input";
   const already = await page.evaluate(([ready, armMode]) => {
@@ -258,12 +287,19 @@ async function measureRun(page, journey, base, profile, timeout, traffic) {
     return "armed";
   }, [journey.ready, mode]);
   if (already === "missing") throw new Error("probe not installed (is the page blocking scripts?)");
-  if (already === "met") throw new UsageError(`journey ${journey.id}: the ready condition is already true before the action; make it specific to the new state or add "gone"`);
+  if (already === "met") {
+    throw new UsageError(`journey ${journey.id}: the ready condition is already true before the action `
+      + `(${await explain(journey.ready)}); make it specific to the new state or add "gone"`);
+  }
   traffic.reset();
   await act(page, journey.action, base, profile.hasTouch, timeout);
-  await page.waitForFunction((key) => {
-    try { return JSON.parse(sessionStorage.getItem(key) || "null")?.t1 != null; } catch { return false; }
-  }, STATE_KEY, { timeout, polling: 50 });
+  try {
+    await page.waitForFunction((key) => {
+      try { return JSON.parse(sessionStorage.getItem(key) || "null")?.t1 != null; } catch { return false; }
+    }, STATE_KEY, { timeout, polling: 50 });
+  } catch {
+    throw new Error(`ready condition not met within ${timeout} ms: ${await explain(journey.ready)}`);
+  }
   const result = await page.evaluate((key) => {
     const state = JSON.parse(sessionStorage.getItem(key));
     const local = window.__zerolagProbe;
@@ -378,6 +414,7 @@ export async function main(argv = process.argv.slice(2)) {
       let session = await open();
       const runs = [];
       const failures = [];
+      let previousError = null;
       for (let index = 0; index < options.warmup + options.runs; index += 1) {
         if (options.cache === "cold" && index > 0) {
           await session.context.close();
@@ -386,9 +423,18 @@ export async function main(argv = process.argv.slice(2)) {
         try {
           const run = await measureRun(session.page, journey, spec.base_url, profile, options.timeout, session.traffic);
           if (index >= options.warmup) runs.push(run);
+          previousError = null;
         } catch (error) {
           if (error instanceof UsageError) throw error;
-          if (index >= options.warmup) failures.push(error.message.split("\n")[0]);
+          const message = error.message.split("\n")[0];
+          if (index >= options.warmup) failures.push(message);
+          // The same failure twice in a row before any success is a broken spec, not noise: stop instead of
+          // waiting for every remaining run to time out.
+          if (runs.length === 0 && message === previousError) {
+            notes.push(`stopped after ${index + 1} identical failures; fix the spec for this profile`);
+            break;
+          }
+          previousError = message;
         }
       }
       if (!options.cdpUrl) await session.context.close();
@@ -422,7 +468,7 @@ export async function main(argv = process.argv.slice(2)) {
         + (failures.length ? ` · ${failures.length} failed run(s): ${failures[0]}` : "")
         + ` → ${out}`);
       for (const note of notes) console.log(`  note: ${note}`);
-      if (failures.length > Math.floor(options.runs * 0.2)) worst = Math.max(worst, 3);
+      if (runs.length === 0 || failures.length > Math.floor(options.runs * 0.2)) worst = Math.max(worst, 3);
     }
   } finally {
     await browser.close();

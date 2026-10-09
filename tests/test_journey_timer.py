@@ -208,6 +208,18 @@ class BrowserRuns(unittest.TestCase):
                      cwd=Path(self.temp.name))
         self.assertEqual(proc.returncode, 2)
         self.assertIn("already true before the action", proc.stderr)
+        self.assertIn('selector "#result": 1 match(es), 1 visible', proc.stderr)
+
+    def test_hidden_ready_element_is_named_and_stops_early(self):
+        out = Path(self.temp.name) / "hidden.json"
+        proc = timer("--spec", str(self.spec), "--journey", "hidden", "--runs", "7", "--timeout", "1000",
+                     "--playwright-from", PLAYWRIGHT_FROM, "--out", str(out), cwd=Path(self.temp.name))
+        self.assertEqual(proc.returncode, 3, proc.stdout + proc.stderr)
+        result = json.loads(out.read_text(encoding="utf-8"))
+        self.assertEqual(result["runs_ms"], [])
+        self.assertIn("present but hidden", result["failures"][0])
+        self.assertLessEqual(len(result["failures"]), 2)  # stopped, not 7 timeouts
+        self.assertIn("identical failures", " ".join(result["notes"]))
 
 
 if __name__ == "__main__":

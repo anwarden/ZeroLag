@@ -6,6 +6,8 @@ All notable changes to ZeroLag. Versions follow semantic versioning; the version
 
 - README reduced to install and use; everything else moved to `docs/guide.md`.
 - CI: the SQL job preloads `pg_stat_statements` and runs every documented query; the extension check compares the value exactly.
+- Journey timer: a failed or premature ready condition now names each clause and its matches ("present but hidden" for an element masked at that viewport); a journey stops after two identical failures instead of timing out every run, and a journey with no successful run exits 3.
+- Diagnose: attribute the time before blaming a cause (ablation, busy vs waiting, data arrival vs display); documents React's ~300 ms Suspense reveal throttle, which dominates local timings of routes with `loading.tsx`. Found while auditing a real admin app: two plausible causes were ruled out by measurement.
 
 ## 2.0.0 — 2026-10-09
 

@@ -35,6 +35,10 @@ Sources: [INP](https://web.dev/articles/inp), [thresholds](https://web.dev/artic
 4. One warm-up run, then at least 5 measured runs (7 preferred). Store raw values (`runs_ms`), not just a median.
 5. Capture one trace per journey for diagnosis (section 5). Timing and tracing are separate: tracing adds overhead.
 6. Separate first-visit/cold behaviour from warm behaviour; never mix them in one sample.
+7. Attribute the time before ranking a cause. A plausible mechanism found in code is not yet the bottleneck:
+   - **Ablate**: rerun the journey with the suspected factor removed (small vs realistic data in an isolated fixture copy; requests blocked with Playwright `page.route`). Equal timings rule the factor out.
+   - **Busy or waiting**: take a CPU profile of the journey (CDP `Profiler`). A mostly idle main thread means the time goes to network, server or a timer, not JavaScript.
+   - **Timeline**: compare when the data finished arriving with when the content appeared. Content about 300 ms after a skeleton, with the data long complete, is React's Suspense reveal throttle ([frontend](frontend.md) §3); fast local servers make it dominate.
 
 CPU slowdown is relative to the host machine. Chrome DevTools (134+) can calibrate "mid-tier" and "low-tier mobile" presets; DevTools cannot truly simulate mobile CPUs, so confirm critical results on a real mid-tier Android when possible ([source](https://developer.chrome.com/blog/devtools-grounded-real-world)).
 
@@ -70,7 +74,8 @@ Spec (CSS selectors for `ready`; any Playwright selector for actions):
 - Options: `--runs` (≥ 3), `--warmup`, `--profile mobile|desktop`, `--cpu`, `--network none|slow-4g`, `--cache warm|cold`, `--storage-state`, `--cdp-url` (attach to a running Chrome with a test session), `--channel chrome`, `--playwright-from <app>`, `--allow-remote` (non-local URLs are refused by default).
 - Output: `.zerolag/runs/<id>-<profile>-<cache>.json` with `runs_ms`, median/IQR, interaction latency and subparts (Event Timing, 8 ms granularity), long-animation-frame blocking time (Chromium), request counts (RSC requests, Server Actions, API calls) and errors. Copy `runs_ms` into `baseline_runs_ms` / `current_runs_ms` in findings.json.
 - Timing: from the input event's timestamp (or navigation start for `goto`) to the first animation frame where `ready` holds. Works across App Router soft navigations and hard navigations on the same origin.
-- Exit codes: 0 ok, 1 runtime problem (Playwright or browser missing), 2 invalid spec or arguments, 3 more than 20% of runs failed.
+- Exit codes: 0 ok, 1 runtime problem (Playwright or browser missing), 2 invalid spec or arguments, 3 more than 20% of runs failed or none succeeded.
+- A failed run says which ready clause did not hold and how many elements matched; two identical failures in a row stop the journey.
 - Mutation journeys repeat the mutation on every run: use fixture data only.
 
 ## 4. Tool ladder and fallbacks
