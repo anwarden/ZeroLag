@@ -133,7 +133,7 @@ class SkillContent(unittest.TestCase):
 
 class Links(unittest.TestCase):
     def test_relative_links_resolve(self):
-        for path in [SKILL, *REFERENCES, ROOT / "README.md", ROOT / "CHANGELOG.md"]:
+        for path in [SKILL, *REFERENCES, ROOT / "README.md", ROOT / "CHANGELOG.md", ROOT / "docs/guide.md"]:
             text = path.read_text(encoding="utf-8")
             targets = re.findall(r"\]\(([^)\s]+)\)", text) + re.findall(r'<img[^>]+src="([^"]+)"', text)
             for target in targets:
