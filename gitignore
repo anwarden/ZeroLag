@@ -1,0 +1,20 @@
+# Python and Node caches
+__pycache__/
+*.py[cod]
+node_modules/
+
+# Operating system and local environment
+.DS_Store
+.env
+.env.*
+!.env.example
+.venv/
+
+# Build output (tools/package_skill.py build)
+dist/
+
+# Real audit artifacts never belong in this public repository
+.zerolag/
+PERFORMANCE_FINDINGS.json
+PERFORMANCE_REPORT.html
+PERFORMANCE_REPORT.md

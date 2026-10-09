@@ -1,0 +1,12 @@
+{
+  "name": "zerolag",
+  "owner": { "name": "anwarden" },
+  "description": "ZeroLag: measure and remove real web app latency.",
+  "plugins": [
+    {
+      "name": "zerolag",
+      "source": ".",
+      "description": "Evidence-led latency audit and optimization for React, Next.js, Vercel, Prisma and Neon/PostgreSQL apps."
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>Target fixture</title></head>
+<body><div id="root"></div>
+<script>
+  // Content becomes usable 200 ms after this document starts.
+  setTimeout(() => { document.getElementById("root").innerHTML = '<p id="arrived">arrived</p>'; }, 200);
+</script>
+</body></html>

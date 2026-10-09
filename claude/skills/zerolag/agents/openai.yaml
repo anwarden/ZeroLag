@@ -1,0 +1,6 @@
+interface:
+  display_name: "ZeroLag"
+  short_description: "Measure and remove real webapp latency"
+  default_prompt: "Use ZeroLag to audit the slowest user journey in this app and show the one-screen report."
+policy:
+  allow_implicit_invocation: true
